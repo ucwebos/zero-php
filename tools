@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Created by PhpStorm.
+ * User: skj
+ * Date: 2018/12/6
+ * Time: 下午3:32
+ */
+
+require_once "vendor/autoload.php";
+
+define('ROOT_PATH', __DIR__);
+define('CONF_TYPE', 'YAML'); // 'YAML' 'PHP'
+define('CONF_DIR', __DIR__);
+
+(new \Zero\Console\Helper())->exec($argv);

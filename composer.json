@@ -1,0 +1,25 @@
+{
+  "name": "skj/zero-php",
+  "authors": [
+    {
+      "name": "skj",
+      "email": "shaokejie@yixia.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/",
+      "Zero\\": "zero/"
+    }
+  },
+  "require": {
+    "php": ">=7.2",
+    "ext-json": "*",
+    "ext-yaml": "*",
+    "ext-pdo": "*",
+    "ext-redis": "*",
+    "ext-swoole": ">=4.3.3",
+    "psr/log": "^1.1",
+    "psr/container": "^1.0"
+  }
+}
