@@ -1,25 +1,24 @@
-FROM alpine:3.9
+FROM php:7.3-alpine
 
-ENV PHPIZE_DEPS \
-		autoconf dpkg-dev dpkg file g++ gcc libc-dev make pkgconf re2c
+RUN mkdir /data /data/www /data/log
 
-RUN apk add --no-cache --virtual .persistent-deps ca-certificates curl tar xz openssl \
-    && mkdir /data /data/build /data/www /data/pid /data/log
+RUN pecl install redis-4.3.0 \
+    && pecl install yaml-2.0.4 \
+    && docker-php-ext-enable redis yaml
 
-ENV PHP_VERSION 7.3.3
-ENV SWOOLE_VERSION 4.3.0
-ENV PHP_INI_DIR /usr/local/etc
-ENV PHP_CFLAGS="-fstack-protector-strong -fpic -fpie -O2"
-ENV PHP_CPPFLAGS="$PHP_CFLAGS"
-ENV PHP_LDFLAGS="-Wl,-O1 -Wl,--hash-style=both -pie"
-
-
-ENV PHP_URL="https://secure.php.net/get/php-$PHP_VERSION.tar.xz/from/this/mirror"
-RUN set -xe; \
-	apk add --no-cache --virtual .fetch-deps gnupg wget; \
-	cd /data/build; \
-	wget -O php.tar.xz "$PHP_URL"; \
-	apk del .fetch-deps
+RUN curl -fsSL 'http://pecl.php.net/get/swoole-4.3.4.tgz' -o swoole.tar.gz \
+    && mkdir -p swoole \
+    && tar -xf swoole.tar.gz -C swoole --strip-components=1 \
+    && rm swoole.tar.gz \
+    && ( \
+        cd swoole \
+        && phpize \
+        && ./configure --enable-openssl --enable-http2 --enable-mysqlnd --enable-sockets \
+        && make -j "$(nproc)" \
+        && make install \
+    ) \
+    && rm -r xcache \
+    && docker-php-ext-enable swoole
 
 RUN set -xe \
     && sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories \
