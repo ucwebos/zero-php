@@ -1,25 +1,52 @@
 FROM php:7.3-alpine
 
-RUN mkdir /data /data/www /data/log
+ENV PHPIZE_DEPS \
+		autoconf dpkg-dev dpkg file g++ gcc libc-dev make pkgconf re2c
 
-RUN pecl install redis-4.3.0 \
-    && pecl install yaml-2.0.4 \
-    && docker-php-ext-enable redis yaml
+ENV PHP_CFLAGS="-fstack-protector-strong -fpic -fpie -O2"
+ENV PHP_CPPFLAGS="$PHP_CFLAGS"
+ENV PHP_LDFLAGS="-Wl,-O1 -Wl,--hash-style=both -pie"
 
-RUN curl -fsSL 'http://pecl.php.net/get/swoole-4.3.4.tgz' -o swoole.tar.gz \
-    && mkdir -p swoole \
-    && tar -xf swoole.tar.gz -C swoole --strip-components=1 \
-    && rm swoole.tar.gz \
-    && ( \
-        cd swoole \
-        && phpize \
-        && ./configure --enable-openssl --enable-http2 --enable-mysqlnd --enable-sockets \
-        && make -j "$(nproc)" \
-        && make install \
-    ) \
-    && rm -r xcache \
-    && docker-php-ext-enable swoole
+RUN set -xe \
+    && sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories \
+    && mkdir /data /data/www /data/log /data/build \
+	&& apk add \
+	    --no-cache --virtual .build-deps \
+		$PHPIZE_DEPS \
+		openssl-dev \
+		zlib-dev \
+		yaml-dev \
+        && export CFLAGS="$PHP_CFLAGS" \
+           CPPFLAGS="$PHP_CPPFLAGS" \
+           LDFLAGS="$PHP_LDFLAGS" \
+        #Redis扩展
+        && cd /data/build \
+        && wget http://pecl.php.net/get/redis-4.3.0.tgz && tar zxvf redis-4.3.0.tgz && cd redis-4.3.0 \
+        && phpize && ./configure && make -j 4 && make install \
+        && cd /data/build \
+        #yaml扩展
+        && cd /data/build \
+        && wget http://pecl.php.net/get/yaml-2.0.4.tgz  && tar zxvf yaml-2.0.4.tgz && cd /data/build/yaml-2.0.4 \
+        && phpize && ./configure && make -j 4 && make install \
+        #igbinary扩展
+        && cd /data/build \
+        && wget http://pecl.php.net/get/igbinary-3.0.1.tgz && tar -zxvf igbinary-3.0.1.tgz && cd /data/build/igbinary-3.0.1 \
+        && phpize && ./configure && make -j 4 && make install \
+        #protobuf扩展
+        && cd /data/build \
+        && wget http://pecl.php.net/get/protobuf-3.7.1.tgz && tar zxvf protobuf-3.7.1.tgz && cd /data/build/protobuf-3.7.1 \
+        && phpize && ./configure && make -j 4 && make install \
+        && cd /data/build \
+        #swoole扩展
+        && wget http://pecl.php.net/get/swoole-4.3.4.tgz && tar zxvf swoole-4.3.4.tgz && cd /data/build/swoole-4.3.4 \
+        && phpize && ./configure --enable-openssl --enable-http2 --enable-mysqlnd \
+        && make -j 4 && make install \
+        && docker-php-ext-enable redis yaml igbinary protobuf swoole \
+        && apk del .build-deps \
+        && rm -rf /data/build \
+        && rm -rf /tmp/pear ~/.pearrc
 
-COPY ./php.ini /usr/local/etc/php.ini
+
+COPY ./php.ini $PHP_INI_DIR/php.ini
 
 WORKDIR /data/www
