@@ -21,8 +21,8 @@ class Helper implements Cmd {
 			'note'  => '代码生成器'
 		],
 		'job' => [
-			'class' => '',
-			'note'  => '脚本任务 [JobClass:Func] [--tmp]'
+			'class' => Job\Commend::class,
+			'note'  => '脚本任务 [JobClass] '
 		],
 	];
 

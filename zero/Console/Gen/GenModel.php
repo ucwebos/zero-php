@@ -28,18 +28,18 @@ class GenModel implements GenInterface {
 
 	public function gen($args) {
 		$table           = $args['t'] ?? '';
-		$this->db        = $args['db'] ?? '';
+		$this->conn        = $args['db'] ?? '';
 		$this->withModel = boolval($args['--model'] ?? FALSE);
-		if (!$this->db || !$table) {
+		if (!$this->conn || !$table) {
 			die("Please input args like db={database} t={table or ALL} -o={outPath} ");
 		}
 		try {
-			$this->dbCli = new Mysql($this->db);
+			$this->connCli = new Mysql($this->conn);
 		} catch (\Throwable $e) {
 			die("Generating err: " . $e->getMessage());
 		}
 		$out                = $args['-o'] ?? '';
-		$this->outPath      = ROOT_PATH . '/app/Dao/Structure';
+		$this->outPath      = ROOT_PATH . '/app/Dao/Entity';
 		$this->modelOutPath = ROOT_PATH . '/app/Dao/Model';
 		if ($out) {
 			$this->outPath = ROOT_PATH . '/' . $out;
@@ -52,21 +52,22 @@ class GenModel implements GenInterface {
 		} else {
 			$tables = [$table];
 		}
-		$dbConf   = Config::get('MYSQL.' . $this->db) ?? [];
-		$database = $dbConf['database'] ?? $this->db;
+		$dbConf   = Config::get('MYSQL.' . $this->conn) ?? [];
+		$database = $dbConf['database'] ?? $this->conn;
 		foreach ($tables as $_table) {
 			echo "Start generating structure for database table >> " . $database . '-----' . $_table . PHP_EOL;
-			$this->genStructure($database, $_table);
+			$this->genEntity($database, $_table);
 		}
 	}
 
 	protected function getAllTables() {
-		return $this->dbCli->getColumn("show tables");
+		return $this->connCli->getColumn("show tables");
 	}
 
-	protected function genStructure($database, $table) {
+	protected function genEntity($database, $table) {
 		$className  = implode('', array_map('ucwords', explode('_', $table)));
-		$data       = $this->dbCli->getAll("select COLUMN_NAME,COLUMN_TYPE,COLUMN_KEY,COLUMN_DEFAULT,COLUMN_COMMENT,EXTRA,IS_NULLABLE from information_schema.columns where table_schema='{$database}' and table_name='{$table}'");
+		$entityName = $className.'Entity';
+		$data       = $this->connCli->getAll("select COLUMN_NAME,COLUMN_TYPE,COLUMN_KEY,COLUMN_DEFAULT,COLUMN_COMMENT,EXTRA,IS_NULLABLE from information_schema.columns where table_schema='{$database}' and table_name='{$table}'");
 		$typeArr    = "";
 		$notes      = "";
 		$priKey     = '';
@@ -96,18 +97,6 @@ class GenModel implements GenInterface {
 			}
 			$typeUp = strtoupper($type);
 
-			switch ($type) {
-				case "string":
-					$default = "'{$default}'";
-					break;
-				case "int":
-					$default = intval($default);
-					break;
-				case "float":
-					$default = floatval($default);
-					break;
-			}
-
 			$notes .= "* @property {$type} {$column} {$comment}
  ";
 			// 字段属性
@@ -121,15 +110,15 @@ class GenModel implements GenInterface {
 
 		$class = "<?php
 
-namespace App\Dao\Structure;
+namespace App\Dao\Entity;
 
-use Zero\Business\Structure;
+use Zero\Business\Dao\Entity;
 
 /**
- * Class $className
+ * Class $entityName
  {$notes}
  */
-class {$className} extends Structure {
+class {$entityName} extends Entity {
 	
 	const TABLE = '{$table}';
 
@@ -137,7 +126,7 @@ class {$className} extends Structure {
 
 	
 }";
-		file_put_contents($this->outPath . "/{$className}.php", $class);
+		file_put_contents($this->outPath . "/{$entityName}.php", $class);
 
 		if ($this->withModel) {
 			echo "Start generating model for table >> " . $database . '-----' . $table . PHP_EOL;
@@ -152,108 +141,103 @@ class {$className} extends Structure {
 		}
 
 		$varName     = lcfirst($className);
-		$structureAs = $className . 'Data';
+		$entityName = $className . 'Entity';
+		$modelName = $className.'Model';
 
 		$model = <<<CODE
 <?php
 
 namespace App\Dao\Model;
 
-use Zero\Business\Model;
-use Zero\Exception\PoolException;
+use Zero\Business\Dao\Model;
+use Zero\Exception\DbException;
+use App\Dao\Entity\\{$entityName};
 
-use App\Dao\Structure\\{$className} as {$structureAs};
-
-class {$className} extends Model {
-	protected \$dbName = '{$this->db}';
+class {$modelName} extends Model {
+	protected \$db = '{$this->conn}';
 	
 
 	/**
 	 * @param array \${$priKey}s
-	 * @return {$structureAs}[]
-	 * @throws PoolException
+	 * @return {$entityName}[]
+	 * @throws DbException
 	 */
-	public function get{$className}s(array \${$priKey}s) {
+	public function findByIds(array \${$priKey}s) {
 		if(!\${$priKey}s){
 			return [];
 		}
-		\$SQL = sprintf("select * from %s where {$priKey} in (%s)", {$structureAs}::TABLE, \$this->strIds(\${$priKey}s));
-		\$data = \$this->db->getAll(\$SQL);
+		\$SQL = sprintf("select * from %s where {$priKey} in (%s)", {$entityName}::TABLE, \$this->strIds(\${$priKey}s));
+		\$data = \$this->conn->getAll(\$SQL);
+		if(!\$data){
+			return [];
+		}
 		\${$varName}s = [];
 		foreach (\$data as \$item) {
-			\${$varName}s[\$item['{$priKey}']] = new $structureAs(\$item);
+			\${$varName}s[\$item['{$priKey}']] = new $entityName(\$item);
 		}
 		return \${$varName}s;
 	}
 	
 	/**
 	 * @param array \${$priKey}
-	 * @return {$structureAs}
-	 * @throws PoolException
+	 * @return {$entityName}|array
+	 * @throws DbException
 	 */
-	public function get{$className}s(array \${$priKey}) {
-		if(!\${$priKey}s){
-			return new $structureAs();
+	public function find(array \${$priKey}) {
+		if(!\${$priKey}){
+			return [];
 		}
-		\$SQL = sprintf("select * from %s where {$priKey}=:{$priKey}", {$structureAs}::TABLE);
-		\$row = \$this->db->getRow(\$SQL,[
+		\$SQL = sprintf("select * from %s where {$priKey}=:{$priKey}", {$entityName}::TABLE);
+		\$row = \$this->conn->getRow(\$SQL,[
 			'{$priKey}' => \${$priKey}
 		]);
-		
-		\${$varName} = new $structureAs(\$row);
+		if(!\$row){
+			return [];
+		}
+		\${$varName} = new $entityName(\$row);
 		return \${$varName};
 	}
 
 	/**
-	 * @param {$structureAs} \${$varName}
+	 * @param {$entityName} \${$varName}
 	 * @param bool         \$returnId
 	 * @return bool|int
-	 * @throws PoolException
+	 * @throws DbException
 	 */
-	public function add{$className}($structureAs \${$varName}, \$returnId = FALSE) {
-		\$result = \$this->db->insert({$structureAs}::TABLE, \${$varName}->insertData());
+	public function insert{$className}($entityName \${$varName}, \$returnId = FALSE) {
+		\$result = \$this->conn->insert({$entityName}::TABLE, \${$varName}->insertData());
 		if (\$returnId) {
-			return intval(\$this->db->lastInsertId());
+			return intval(\$this->conn->lastInsertId());
 		}
 		return \$result;
 	}
 
 	/**
 	 * @param              \${$priKey}
-	 * @param $structureAs \${$varName}
+	 * @param $entityName \${$varName}
 	 * @return bool
-	 * @throws PoolException
+	 * @throws DbException
 	 */
-	public function set{$className}(\${$priKey}, $structureAs \${$varName}) {
-		\$result = \$this->db->update({$structureAs}::TABLE, \${$varName}->insertData(), ['{$priKey}' => \${$priKey}]);
-		return \$result;
-	}
-
-	/**
-	 * @param \${$priKey}
-	 * @return bool
-	 * @throws PoolException
-	 */
-	public function delete(\${$priKey}) {
-		\$result = \$this->db->delete({$structureAs}::TABLE, ['{$priKey}' => \${$priKey}]);
+	public function update{$className}(\${$priKey}, $entityName \${$varName}) {
+		\$result = \$this->conn->update({$entityName}::TABLE, \${$varName}->insertData(), ['{$priKey}' => \${$priKey}]);
 		return \$result;
 	}
 	
 	/**
-	 * @param $structureAs \${$varName}
+	 * @param $entityName \${$varName}
 	 * @return array
-	 * @throws PoolException
+	 * @throws DbException
 	 */
-	public function getIdsBy($structureAs \${$varName}) {
-		\$wheres   = \${$varName}->getSetField(\${$varName});
+	public function getIdsBy($entityName \${$varName}) {
+		\$wheres   = \${$varName}->toArray();
 		\$whereStr = \$this->strWhere(\$wheres);
-		\$SQL      = sprintf("select {$priKey} from %s where %s ", $structureAs::TABLE, \$whereStr);
-		\$data = \$this->db->getColumn(\$SQL, \$wheres);
+		\$SQL      = sprintf("select {$priKey} from %s where %s ", $entityName::TABLE, \$whereStr);
+		\$data = \$this->conn->getColumn(\$SQL, \$wheres);
 		return \$data;
 	}
 }
 CODE;
 
-		file_put_contents($this->modelOutPath . "/{$className}.php", $model);
+		file_put_contents($this->modelOutPath . "/{$modelName}.php", $model);
 	}
 }

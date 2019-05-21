@@ -18,13 +18,6 @@ use Zero\Console\Helper;
  */
 class Commend implements Cmd {
 	const CMD = [
-		'bean'   => [
-			'args'  => [
-				'[proto]' => 'proto文件路径',
-			],
-			'note'  => '请求IO结构生成',
-			'class' => GenBean::class,
-		],
 		'doc'    => [
 			'args'  => [
 				'[proto]' => 'proto文件路径',
