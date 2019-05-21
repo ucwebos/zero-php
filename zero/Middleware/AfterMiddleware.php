@@ -10,8 +10,9 @@ namespace Zero\Middleware;
 
 use Zero\Business\Http\Request;
 use Zero\Business\Http\Response;
+use Zero\Contract;
 
-abstract class AfterMiddleware {
+abstract class AfterMiddleware extends Contract {
 	/**
 	 * @param Request  $request
 	 * @param Response $response

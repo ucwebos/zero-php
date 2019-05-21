@@ -8,9 +8,10 @@
 
 namespace Zero\Middleware;
 
+use Zero\Contract;
 use Zero\Business\Http\Request;
 
-abstract class BeforeMiddleware {
+abstract class BeforeMiddleware extends Contract {
 	/**
 	 * @param Request $request
 	 * @return Request|MiddlewareRejected
