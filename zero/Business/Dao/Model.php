@@ -30,10 +30,10 @@ class Model extends Contract {
 	private $pool;
 
 	/**
-	 * @return static
+	 * @throws PoolException
 	 */
 	public static function conn(){
-		return static();
+		return new static();
 	}
 
 	public function __construct() {
@@ -56,23 +56,6 @@ class Model extends Contract {
 			$this->pool->recycle($this->conn);
 		}
 	}
-
-	public function findOne($id){
-
-	}
-
-	public function findList($ids){
-
-	}
-
-	public function findBy(Entity $entity){
-
-	}
-
-	public function save(Entity $entity){
-		return $entity;
-	}
-
 
 	protected function strIds(array $ids, $glue = ',') {
 		$str = '';

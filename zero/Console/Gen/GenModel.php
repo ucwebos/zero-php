@@ -67,7 +67,7 @@ class GenModel implements GenInterface {
 	protected function genEntity($database, $table) {
 		$className  = implode('', array_map('ucwords', explode('_', $table)));
 		$entityName = $className.'Entity';
-		$data       = $this->connCli->getAll("select COLUMN_NAME,COLUMN_TYPE,COLUMN_KEY,COLUMN_DEFAULT,COLUMN_COMMENT,EXTRA,IS_NULLABLE from information_schema.columns where table_schema='{$database}' and table_name='{$table}'");
+		$data       = $this->connCli->getAll("select COLUMN_NAME,COLUMN_TYPE,COLUMN_KEY,COLUMN_DEFAULT,COLUMN_COMMENT,EXTRA,IS_NULLABLE from information_schema.columns where table_schema='{$database}' and table_name='{$table}' ORDER BY ORDINAL_POSITION");
 		$typeArr    = "";
 		$notes      = "";
 		$priKey     = '';
@@ -162,7 +162,7 @@ class {$modelName} extends Model {
 	 * @return {$entityName}[]
 	 * @throws DbException
 	 */
-	public function findByIds(array \${$priKey}s) {
+	public function findList(array \${$priKey}s) {
 		if(!\${$priKey}s){
 			return [];
 		}
@@ -179,11 +179,11 @@ class {$modelName} extends Model {
 	}
 	
 	/**
-	 * @param array \${$priKey}
+	 * @param \${$priKey}
 	 * @return {$entityName}|array
 	 * @throws DbException
 	 */
-	public function find(array \${$priKey}) {
+	public function find(\${$priKey}) {
 		if(!\${$priKey}){
 			return [];
 		}
@@ -204,8 +204,8 @@ class {$modelName} extends Model {
 	 * @return bool|int
 	 * @throws DbException
 	 */
-	public function insert{$className}($entityName \${$varName}, \$returnId = FALSE) {
-		\$result = \$this->conn->insert({$entityName}::TABLE, \${$varName}->insertData());
+	public function insert($entityName \${$varName}, \$returnId = FALSE) {
+		\$result = \$this->conn->insert({$entityName}::TABLE, \${$varName}->toArray());
 		if (\$returnId) {
 			return intval(\$this->conn->lastInsertId());
 		}
@@ -218,8 +218,8 @@ class {$modelName} extends Model {
 	 * @return bool
 	 * @throws DbException
 	 */
-	public function update{$className}(\${$priKey}, $entityName \${$varName}) {
-		\$result = \$this->conn->update({$entityName}::TABLE, \${$varName}->insertData(), ['{$priKey}' => \${$priKey}]);
+	public function update(\${$priKey}, $entityName \${$varName}) {
+		\$result = \$this->conn->update({$entityName}::TABLE, \${$varName}->toArray(), ['{$priKey}' => \${$priKey}]);
 		return \$result;
 	}
 	
@@ -228,10 +228,10 @@ class {$modelName} extends Model {
 	 * @return array
 	 * @throws DbException
 	 */
-	public function getIdsBy($entityName \${$varName}) {
+	public function findBy($entityName \${$varName}) {
 		\$wheres   = \${$varName}->toArray();
 		\$whereStr = \$this->strWhere(\$wheres);
-		\$SQL      = sprintf("select {$priKey} from %s where %s ", $entityName::TABLE, \$whereStr);
+		\$SQL      = sprintf("select * from %s where %s ", $entityName::TABLE, \$whereStr);
 		\$data = \$this->conn->getColumn(\$SQL, \$wheres);
 		return \$data;
 	}

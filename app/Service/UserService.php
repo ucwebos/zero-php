@@ -8,16 +8,20 @@
 
 namespace App\Service;
 
+use Zero\Business\Service;
+use Zero\Exception\PoolException;
+use Zero\Exception\DbException;
+use App\Dao\Entity\UserEntity;
 use App\Dao\Model\UserModel;
 
-use Zero\Business\Service as BaseService;
-
-class UserService extends BaseService {
-
-
-	public function getUserInfo() {
-
-		$r =  UserModel::conn()->get();
-
+class UserService extends Service {
+	/**
+	 * @param $uid
+	 * @return UserEntity|array
+	 * @throws PoolException|DbException
+	 */
+	public function getUserInfo($uid) {
+		return UserModel::conn()
+			->find($uid);
 	}
 }

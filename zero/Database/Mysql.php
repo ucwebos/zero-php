@@ -232,6 +232,31 @@ class Mysql {
 	}
 
 	/**
+	 * 插入一行记录存在则更新
+	 * @param       $tableName
+	 * @param array $data
+	 * @param array $update
+	 * @return bool
+	 * @throws DbException
+	 */
+	public function insertUpdate($tableName, array $data, array $update) {
+		if (!is_array($data) || empty($data)) {
+			return FALSE;
+		}
+		$keys   = array_keys($data);
+		$cols   = '`' . implode('`,`', $keys) . '`';
+		$values = ':' . implode(',:', $keys);
+		$sets   = [];
+		foreach ($update as $k => $v) {
+			$sets[] = '`' . $k . '`' . '=:' . $k;
+		}
+		$sets = implode(',', $sets);
+		$sql  = "insert into {$tableName} ({$cols}) values ({$values}) ON DUPLICATE KEY UPDATE {$sets}";
+
+		return $this->execute($sql, array_merge($data, $update));
+	}
+
+	/**
 	 * 替换一行记录
 	 * @param string $tableName 表名
 	 * @param array  $data      绑定参数
