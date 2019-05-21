@@ -28,10 +28,6 @@ class GenDoc implements GenInterface {
 	protected $requestMessages  = [];
 	protected $responseMessages = [];
 
-	public function __construct() {
-
-
-	}
 
 	public function gen($args) {
 

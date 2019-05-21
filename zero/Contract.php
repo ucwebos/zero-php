@@ -32,7 +32,7 @@ class Contract {
 	 * @return Container
 	 */
 	protected function app() {
-		return Container::getInstance();
+		return Container::app();
 	}
 
 	/**

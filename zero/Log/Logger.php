@@ -31,7 +31,12 @@ class Logger implements LoggerInterface {
 	protected $writer;
 
 	public function __construct() {
-		$this->writer = new File();
+		if ($writer = Container::app()
+			->get('LoggerWriter')) {
+			$this->writer = $writer;
+		} else {
+			$this->writer = new File();
+		}
 	}
 
 	public function log($level, $message, array $context = []) {

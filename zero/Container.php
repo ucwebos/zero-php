@@ -12,8 +12,15 @@ use Psr\Container\ContainerInterface;
 use Zero\Component\Singleton;
 
 class Container implements ContainerInterface {
-	use Singleton;
-	protected $instance = [];
+	private static $app;
+	protected      $instance = [];
+
+	static function app() {
+		if (!isset(self::$app)) {
+			self::$app = new self();
+		}
+		return self::$app;
+	}
 
 	public function get($id) {
 		return $this->instance[$id] ?? NULL;
@@ -21,5 +28,9 @@ class Container implements ContainerInterface {
 
 	public function has($id) {
 		return isset($this->instance[$id]);
+	}
+
+	public function set($id, $obj) {
+		$this->instance[$id] = $obj;
 	}
 }

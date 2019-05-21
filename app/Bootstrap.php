@@ -11,6 +11,7 @@ namespace App;
 use Zero\Co\Pool\MysqlPool;
 use Zero\Co\Pool\PoolManager;
 use Zero\Co\Pool\RedisPool;
+use Zero\Container;
 use Zero\IBootstrap;
 use Zero\Route\Route;
 use Swoole\Runtime;
@@ -65,15 +66,15 @@ class Bootstrap implements IBootstrap {
 			Runtime::enableCoroutine(TRUE);
 
 			//初始化连接池
-//			PoolManager::register(MysqlPool::class, 'core', 50, 300, 0.1);
+			PoolManager::register(MysqlPool::class, 'core', 50, 300, 0.1);
 			PoolManager::register(RedisPool::class, 'cache', 50, 300, 0.1);
 			PoolManager::init();
 			//初始化管道event等
 
 		}
-
+		// 可选
 		// 注册默认LoggerWriter ...
-		// 注册路由失败处理类 ...
+		//	Container::app()->set('LoggerWriter',new ElkWriter());
 		// 注册类到app容器 ...
 
 	}
