@@ -6,11 +6,10 @@
  * Time: 16:34
  */
 
-namespace Zero;
+namespace Zero\Log;
 
 use Psr\Log\LoggerInterface;
-use Zero\Log\File;
-use Zero\Log\WriterInterface;
+use Zero\Container;
 
 class Logger implements LoggerInterface {
 	const EMERGENCY = 'emergency';

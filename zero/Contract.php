@@ -2,6 +2,8 @@
 
 namespace Zero;
 
+use Zero\Log\Logger;
+
 /**
  * Class Contract
  * @package Zero\Business
