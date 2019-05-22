@@ -23,10 +23,10 @@ class Entry {
 			Config::setEnv($env);
 		}
 		Config::load();
-		$config    = Config::get('MAIN_SERVER');
+		$config    = Config::get('FPM_SERVER');
 		$bootstrap = $config['bootstrap'] ?? '';
 		if (!class_exists($bootstrap)) {
-			die("not found class [MAIN_SERVER.bootstrap]!");
+			die("not found class [FPM_SERVER.bootstrap]!");
 		}
 		$this->bootstrap = new $bootstrap;
 		if (!$this->bootstrap instanceof IBootstrap) {
