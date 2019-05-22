@@ -37,8 +37,8 @@ class Commend implements Cmd {
 			'args'  => [
 				'db=[database]' => '数据库',
 				't=[model]'     => '表名 为ALL时生成所有',
-				'--model=true'  => '生成model文件 默认只生成Entity',
-				'-o=[path]'     => '生成文件的地址【根目录路径】默认为Dao下',
+				'--model=true'  => '可选 生成model文件 默认只生成Entity',
+				'-o=[path]'     => '可选 生成文件的地址【根目录路径】默认为Dao下',
 			],
 			'note'  => '数据表模型生成',
 			'class' => GenModel::class,
