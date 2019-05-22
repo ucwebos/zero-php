@@ -22,7 +22,6 @@ class Dispatcher extends Contract {
 
 	public function __construct($routeMap) {
 		$this->routeMap     = $routeMap;
-		var_dump($routeMap);
 		$this->errorHandler = new ErrorHandler();
 	}
 
