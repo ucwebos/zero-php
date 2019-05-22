@@ -22,29 +22,23 @@ class Commend implements Cmd {
 			'args'  => [
 				'[proto]' => 'proto文件路径',
 			],
-			'note'  => '生成文档',
+			'note'  => '生成文档 WIP...',
 			'class' => GenDoc::class,
-		],
-		'module' => [
-			'args'  => [
-				'm=[module]' => '模块',
-			],
-			'note'  => '代码生成',
-			'class' => GenModule::class,
 		],
 		'table'  => [
 			'args'  => [
 				'db=[database]' => '数据库',
 				't=[model]'     => '模型 为ALL时生成所有',
 			],
-			'note'  => '数据库表生成',
+			'note'  => '数据库表生成 WIP...',
 			'class' => GenTable::class,
 		],
 		'model'  => [
 			'args'  => [
 				'db=[database]' => '数据库',
-				't=[model]'     => '模型 为ALL时生成所有',
-				'-o=[path]'     => '生成文件的地址【根目录路径】',
+				't=[model]'     => '表名 为ALL时生成所有',
+				'--model=true'  => '生成model文件 默认只生成Entity',
+				'-o=[path]'     => '生成文件的地址【根目录路径】默认为Dao下',
 			],
 			'note'  => '数据表模型生成',
 			'class' => GenModel::class,
