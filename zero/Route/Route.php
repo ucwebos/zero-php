@@ -5,7 +5,7 @@ namespace Zero\Route;
 use Zero\Exception\BadRouteException;
 
 class Route {
-	private $prefix;
+	private $prefix              = '';
 	private $middleware          = [];
 	private $namespace           = '\\App\\Http';
 	private $middlewareNamespace = '\\App\\Middleware';
@@ -49,7 +49,7 @@ class Route {
 		$curPrefix     = $this->prefix;
 		$curNamespace  = $this->namespace;
 		$curMiddleware = $this->middleware;
-		$this->prefix  = $this->prefix . $prefix;
+		$this->prefix  = $this->prefix . '/' . trim($prefix, '/');
 		if ($namespace) {
 			$this->namespace = $this->namespace . '\\' . trim($namespace, '\\');
 		}
@@ -70,7 +70,7 @@ class Route {
 	 * @param $handler
 	 */
 	public function any($route, $handler) {
-		$route = $this->prefix . $route;
+		$route = $this->prefix . '/' . trim($route, '/');
 		$this->addRoute('ANY', $route, $handler, $this->namespace, $this->middleware);
 	}
 
@@ -79,7 +79,7 @@ class Route {
 	 * @param $handler
 	 */
 	public function get($route, $handler) {
-		$route = $this->prefix . $route;
+		$route = $this->prefix . '/' . trim($route, '/');
 		$this->addRoute('GET', $route, $handler, $this->namespace, $this->middleware);
 	}
 
@@ -88,7 +88,7 @@ class Route {
 	 * @param $handler
 	 */
 	public function post($route, $handler) {
-		$route = $this->prefix . $route;
+		$route = $this->prefix . '/' . trim($route, '/');
 		$this->addRoute('POST', $route, $handler, $this->namespace, $this->middleware);
 	}
 
@@ -97,7 +97,7 @@ class Route {
 	 * @param $handler
 	 */
 	public function put($route, $handler) {
-		$route = $this->prefix . $route;
+		$route = $this->prefix . '/' . trim($route, '/');
 		$this->addRoute('PUT', $route, $handler, $this->namespace, $this->middleware);
 	}
 
@@ -106,7 +106,7 @@ class Route {
 	 * @param $handler
 	 */
 	public function delete($route, $handler) {
-		$route = $this->prefix . $route;
+		$route = $this->prefix . '/' . trim($route, '/');
 		$this->addRoute('DELETE', $route, $handler, $this->namespace, $this->middleware);
 	}
 
@@ -115,7 +115,7 @@ class Route {
 	 * @param $handler
 	 */
 	public function patch($route, $handler) {
-		$route = $this->prefix . $route;
+		$route = $this->prefix . '/' . trim($route, '/');
 		$this->addRoute('PATCH', $route, $handler, $this->namespace, $this->middleware);
 	}
 
@@ -124,7 +124,7 @@ class Route {
 	 * @param $handler
 	 */
 	public function head($route, $handler) {
-		$route = $this->prefix . $route;
+		$route = $this->prefix . '/' . trim($route, '/');
 		$this->addRoute('HEAD', $route, $handler, $this->namespace, $this->middleware);
 	}
 
@@ -143,10 +143,7 @@ class Route {
 		if ($middleware) {
 			foreach ($middleware as $_middleware) {
 				if (!class_exists($_middleware)) {
-					$_middleware = $this->middlewareNamespace . '\\' . trim($_middleware, '\\');
-					if (!class_exists($_middleware)) {
-						throw new BadRouteException(sprintf('Cannot found middleware[%s] for route ["%s"|"%s"]', $_middleware, $route, $httpMethod));
-					}
+					throw new BadRouteException(sprintf('Cannot found middleware[%s] for route ["%s"|"%s"]', $_middleware, $route, $httpMethod));
 				}
 			}
 		}

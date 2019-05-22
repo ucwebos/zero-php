@@ -24,31 +24,24 @@ class Bootstrap implements IBootstrap {
 	 */
 	public function route(Route $r): Route {
 		//统一参数解析中间件
-		$r->middleware(['JsonParams'],function (Route $r){
-
-
+		$r->middleware(['JsonParams'], function (Route $r) {
 			$r->any('/', function () {
 				return "welcome!";
 			});
-			$r->get('/test', 'Test::t');
+			$r->get('test', 'Test::t');
 
-			$r->any('/t1', 'Test::t');
+			$r->any('t1', 'Test::t');
 
-			$r->group('/admin', function (Route $r) {
-				$r->post('/t2', 'Test::t2');
+			$r->group('admin', function (Route $r) {
+				$r->post('t2', 'Test::t2');
 			});
 
-			$r->group('/admin', function (Route $r) {
-				$r->post('/t22', 'Test::t2');
-			},'Admin',['Auth']);
-
-
-
+			$r->group('admin', function (Route $r) {
+				$r->post('t22', 'Test::t2');
+			}, 'Admin');
 		});
 
-
-		$r->get('/t3', 'Test::t3');
-
+		$r->get('t3', 'Test::t3');
 
 		return $r;
 	}
