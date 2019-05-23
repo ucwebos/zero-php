@@ -8,6 +8,8 @@ ENV PHP_CPPFLAGS="$PHP_CFLAGS"
 ENV PHP_LDFLAGS="-Wl,-O1 -Wl,--hash-style=both -pie"
 ENV PHP_INI_DIR /usr/local/etc/php
 
+RUN docker-php-ext-install pdo_mysql
+
 RUN set -xe \
     && sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories \
     && mkdir /data /data/www /data/log /data/build \
