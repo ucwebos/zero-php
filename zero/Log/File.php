@@ -11,7 +11,7 @@ class File implements WriterInterface {
 	private $date;
 
 	public function __construct() {
-		$this->path = Config::get('LOGGER.Path') ?? ROOT_PATH . '/runtime/log';
+		$this->path = Config::get('LOGGER.path') ?? ROOT_PATH . '/runtime/log';
 	}
 
 	/**
