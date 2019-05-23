@@ -50,12 +50,16 @@ class Redis {
 		$auth = $this->config['auth'] ?? '';
 
 		$redis = new \Redis();
-		$bool  = $redis->connect($ip, $port);
+		try {
+			$bool = $redis->connect($ip, $port);
+		} catch (\Exception $e) {
+			throw new DbException("REDIS.{$name}", "Error to conn." . $e->getMessage(), DbException::ERROR_CONN, $e);
+		}
 		if ($bool && $auth) {
 			$bool = $redis->auth($auth);
 		}
 		if (!$bool) {
-			throw new DbException("REDIS.{$name}", "Error to conn", DbException::ERROR_CONN);
+			throw new DbException("REDIS.{$name}", "Error to conn auth", DbException::ERROR_CONN);
 		}
 		$this->redis = $redis;
 	}
