@@ -16,7 +16,7 @@ use Zero\Console\Helper;
  * Class Commend
  * @package Zero\Console\Gen
  */
-class Commend implements Cmd {
+class Command implements Cmd {
 	const CMD = [
 		'doc'    => [
 			'args'  => [

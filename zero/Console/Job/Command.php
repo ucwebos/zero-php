@@ -10,7 +10,7 @@ namespace Zero\Console\Job;
 
 use Zero\Console\Cmd;
 
-class Commend implements Cmd {
+class Command implements Cmd {
 	protected $namespace = '\\App\\Command';
 
 	public function exec($argv) {

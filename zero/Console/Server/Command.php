@@ -11,7 +11,7 @@ namespace Zero\Console\Server;
 use Zero\Console\Cmd;
 use Zero\Console\Helper;
 
-class Commend implements Cmd {
+class Command implements Cmd {
 	const CMD = [
 		'start'   => [
 			'note' => '启动服务',

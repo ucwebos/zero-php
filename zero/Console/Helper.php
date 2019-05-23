@@ -13,15 +13,15 @@ use Zero\Config;
 class Helper implements Cmd {
 	const CMD = [
 		'srv' => [
-			'class' => Server\Commend::class,
+			'class' => Server\Command::class,
 			'note'  => '服务管理'
 		],
 		'gen' => [
-			'class' => Gen\Commend::class,
+			'class' => Gen\Command::class,
 			'note'  => '代码生成器'
 		],
 		'job' => [
-			'class' => Job\Commend::class,
+			'class' => Job\Command::class,
 			'note'  => '脚本任务 [JobClass] '
 		],
 	];
