@@ -9,7 +9,9 @@
 namespace Zero\Server;
 
 use Zero\Business\Http\Response;
+use Zero\Co\SyncProxy;
 use Zero\Config;
+use Zero\Container;
 use Zero\Route\Route;
 use Zero\Route\Dispatcher;
 use Zero\IBootstrap;
@@ -57,14 +59,21 @@ class HttpServer extends IServer {
 	}
 
 	public function onTask(\Swoole\Server $server, $task_id, $src_worker_id, $data) {
-		//todo taskCo
+		if (is_array($data) && count($data) == 4) {
+			list($class,$args,$name,$arguments) = $data;
+			$obj = new $class(...$args);
+			return call_user_func_array([$obj, $name], $arguments);
+		}
 	}
 
 	public function onPipeMessage(\Swoole\Server $server, $from_worker_id, $message) {
 	}
 
 	public function onWorkerStart(\Swoole\Server $server, $workerId) {
-		$this->bootstrap->start($server);
+		if ($server->taskworker) {
+			define('TASK_WORKER', TRUE);
+		}
+		$this->bootstrap->start();
 	}
 
 	public function onWorkerStop(\Swoole\Server $server, $workerId) {
@@ -107,9 +116,10 @@ class HttpServer extends IServer {
 		$this->server->on("Request", [$this, "onRequest"]);
 
 		if (isset($config['setting']['task_worker_num']) && $config['setting']['task_worker_num'] > 0) {
+			//同步代理任务定义
+			Container::app()
+				->set('SERVER', $this->server);
 			$this->server->on("Task", [$this, "onTask"]);
-			$this->server->on("Finish", function () {
-			});
 		}
 		try {
 			$this->init($this->server);

@@ -6,7 +6,7 @@ use Zero\Log\Logger;
 
 /**
  * Class Contract
- * @package Zero\Business
+ * @package Zero
  */
 class Contract {
 	/**
@@ -68,6 +68,6 @@ class Contract {
 	 * @return bool
 	 */
 	protected function isCo() {
-		return PHP_SAPI == 'cli' && defined('COROUTINE_SERVER');
+		return PHP_SAPI == 'cli' && defined('COROUTINE_SERVER') && !defined('TASK_WORKER');
 	}
 }

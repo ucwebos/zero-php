@@ -126,7 +126,7 @@ class Entity implements ArrayAccess, JsonSerializable, Countable {
 	}
 
 	public function jsonSerialize() {
-		return json_encode($this->property);
+		return $this->property;
 	}
 
 	public function count() {

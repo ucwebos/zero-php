@@ -19,7 +19,6 @@ class Model extends Contract {
 	 * @var string db配置
 	 */
 	protected $db = "core";
-
 	/**
 	 * @var Mysql
 	 */
@@ -32,7 +31,7 @@ class Model extends Contract {
 	/**
 	 * @throws PoolException
 	 */
-	public static function conn(){
+	public static function conn() {
 		return new static();
 	}
 
@@ -54,6 +53,21 @@ class Model extends Contract {
 	public function __destruct() {
 		if ($this->isCo()) {
 			$this->pool->recycle($this->conn);
+		}
+	}
+
+	public function transaction(\Closure $func) {
+		$this->conn->beginTransaction();
+		try {
+			$res = $func($this);
+			$this->conn->commit();
+			return $res;
+		} catch (\Exception $e) {
+			$this->conn->rollBack();
+			throw $e;
+		} catch (\Throwable $e) {
+			$this->conn->rollBack();
+			throw $e;
 		}
 	}
 
