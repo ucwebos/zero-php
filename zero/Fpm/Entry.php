@@ -52,6 +52,7 @@ class Entry {
 		if (is_array($result) || is_object($result)) {
 			$result = json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 		}
+		http_response_code($resp->getStatus());
 		foreach ($resp->getHeaders() as $k => $v) {
 			header($k . ': ' . $v);
 		}
