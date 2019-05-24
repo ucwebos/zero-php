@@ -56,21 +56,6 @@ class Model extends Contract {
 		}
 	}
 
-	public function transaction(\Closure $func) {
-		$this->conn->beginTransaction();
-		try {
-			$res = $func($this);
-			$this->conn->commit();
-			return $res;
-		} catch (\Exception $e) {
-			$this->conn->rollBack();
-			throw $e;
-		} catch (\Throwable $e) {
-			$this->conn->rollBack();
-			throw $e;
-		}
-	}
-
 	protected function strIds(array $ids, $glue = ',') {
 		$str = '';
 		foreach ($ids as $i => $id) {
