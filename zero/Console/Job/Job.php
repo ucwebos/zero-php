@@ -8,10 +8,16 @@
 
 namespace Zero\Console\Job;
 
+use Zero\Log\Logger;
+
 abstract class Job {
 	protected $args = [];
 
 	abstract public function run();
+	/**
+	 * @var Logger
+	 */
+	private $logger;
 
 	public function exec(array $args) {
 		try {
@@ -20,5 +26,15 @@ abstract class Job {
 		} catch (\Throwable $e) {
 			echo date('Y-m-d H:i:s') . ' ---- ' . $e->getMessage() . PHP_EOL;
 		}
+	}
+
+	/**
+	 * @return Logger
+	 */
+	protected function logger() {
+		if (!$this->logger) {
+			$this->logger = new Logger();
+		}
+		return $this->logger;
 	}
 }

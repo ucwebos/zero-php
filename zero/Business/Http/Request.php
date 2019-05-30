@@ -23,7 +23,7 @@ class Request {
 	/**
 	 * @var array 附加数据
 	 */
-	protected $append = [];
+	protected $appends = [];
 
 	public function getUri() {
 		return $this->uri;
@@ -144,5 +144,27 @@ class Request {
 		return $this->method;
 	}
 
+	/**
+	 * @return array
+	 */
+	public function getAppends(): array {
+		return $this->appends;
+	}
 
+	/**
+	 * @param      $key
+	 * @param null $default
+	 * @return mixed|null
+	 */
+	public function getAppend($key, $default = NULL) {
+		return $this->appends[$key] ?? $default;
+	}
+
+	/**
+	 * @param $key
+	 * @param $value
+	 */
+	public function append($key, $value) {
+		$this->appends[$key] = $value;
+	}
 }

@@ -21,7 +21,8 @@ class Manager {
 	private $projectName;
 
 	public function __construct() {
-		$this->config      = Config::get('MAIN_SERVER');
+		$tag               = Config::get('SERVER_TAG') ?: 'MAIN';
+		$this->config      = Config::get('SERVER.' . $tag);
 		$this->projectName = $this->config['name'] ?? 'zero-php-project';
 		$this->pidFile     = ROOT_PATH . '/' . $this->projectName . '.pid';
 		$this->server      = new HttpServer($this->projectName, ROOT_PATH);
@@ -32,9 +33,10 @@ class Manager {
 	}
 
 	public function daemon() {
-		$setting              = Config::get('MAIN_SERVER.setting') ?: [];
+		$tag                  = Config::get('SERVER_TAG') ?: 'MAIN';
+		$setting              = Config::get('SERVER.' . $tag . '.setting') ?: [];
 		$setting['daemonize'] = 1;
-		Config::setField('MAIN_SERVER.setting', $setting);
+		Config::setField('SERVER.' . $tag . '.setting', $setting);
 		$this->server->run();
 	}
 

@@ -9,20 +9,8 @@
 namespace Zero;
 
 class Config {
-	/**
-	 * @var string 配置环境ENV
-	 */
-	private static $env    = 'env';
 	private static $config = [];
 	private static $sets   = [];
-
-	/**
-	 * 配置环境设置
-	 * @param string $env
-	 */
-	public static function setEnv($env = 'env') {
-		self::$env = $env;
-	}
 
 	/**
 	 * 初始化配置
@@ -119,7 +107,7 @@ class Config {
 	 * 加载配置
 	 */
 	private static function loadPHP() {
-		$env  = self::$env;
+		$env  = ENV;
 		$file = CONF_DIR . "/$env.php";
 		try {
 			$config       = include "{$file}";
@@ -133,7 +121,7 @@ class Config {
 	 * 加载配置
 	 */
 	private static function loadYAML() {
-		$env  = self::$env;
+		$env  = ENV;
 		$file = CONF_DIR . "/$env.yml";
 		try {
 			$config = yaml_parse_file($file, -1);

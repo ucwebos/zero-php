@@ -18,12 +18,13 @@ class Entry {
 	 */
 	protected $dispatcher;
 
-	public function __construct($env = '') {
-		if ($env) {
-			Config::setEnv($env);
-		}
+	/**
+	 * Entry constructor.
+	 * @param string $tag
+	 */
+	public function __construct($tag = 'MAIN') {
 		Config::load();
-		$config    = Config::get('FPM_SERVER');
+		$config    = Config::get('FPM.' . $tag);
 		$bootstrap = $config['bootstrap'] ?? '';
 		if (!class_exists($bootstrap)) {
 			die("not found class [FPM_SERVER.bootstrap]!");

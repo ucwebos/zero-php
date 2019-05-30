@@ -42,7 +42,7 @@ class File implements WriterInterface {
 	}
 
 	public function write($level, $tag, $message, array $context = []) {
-		if (!$this->fp || date('Ymd') != $this->date) {
+		if (!$this->fp || !is_resource($this->fp)|| date('Ymd') != $this->date) {
 			$this->fp = fopen($this->getFile(), "a+");
 		}
 		$data = [

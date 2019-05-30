@@ -10,7 +10,11 @@
     "psr-4": {
       "App\\": "app/",
       "Zero\\": "zero/"
-    }
+    },
+    "files": [
+      "zero/Support/const.php",
+      "zero/Support/helpers.php"
+    ]
   },
   "require": {
     "php": ">=7.2",

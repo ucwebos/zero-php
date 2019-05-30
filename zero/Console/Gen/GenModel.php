@@ -20,7 +20,7 @@ class GenModel implements GenInterface {
 	/**
 	 * @var Mysql
 	 */
-	protected $dbCli;
+	protected $conn;
 	protected $db;
 	protected $outPath;
 	protected $withModel;
@@ -28,22 +28,18 @@ class GenModel implements GenInterface {
 
 	public function gen($args) {
 		$table           = $args['t'] ?? '';
-		$this->conn        = $args['db'] ?? '';
+		$this->db        = $args['db'] ?? '';
 		$this->withModel = boolval($args['--model'] ?? FALSE);
-		if (!$this->conn || !$table) {
-			die("Please input args like db={database} t={table or ALL} -o={outPath} ");
+		if (!$this->db || !$table) {
+			die("Please input args like db={database} t={table or ALL} ");
 		}
 		try {
-			$this->connCli = new Mysql($this->conn);
+			$this->conn = new Mysql($this->db);
 		} catch (\Throwable $e) {
 			die("Generating err: " . $e->getMessage());
 		}
-		$out                = $args['-o'] ?? '';
 		$this->outPath      = ROOT_PATH . '/app/Dao/Entity';
 		$this->modelOutPath = ROOT_PATH . '/app/Dao/Model';
-		if ($out) {
-			$this->outPath = ROOT_PATH . '/' . $out;
-		}
 		if (!file_exists($this->outPath)) {
 			die(" No such directory in {$this->outPath} ");
 		}
@@ -52,8 +48,8 @@ class GenModel implements GenInterface {
 		} else {
 			$tables = [$table];
 		}
-		$dbConf   = Config::get('MYSQL.' . $this->conn) ?? [];
-		$database = $dbConf['database'] ?? $this->conn;
+		$dbConf   = Config::get('MYSQL.' . $this->db) ?? [];
+		$database = $dbConf['database'] ?? $this->db;
 		foreach ($tables as $_table) {
 			echo "Start generating structure for database table >> " . $database . '-----' . $_table . PHP_EOL;
 			$this->genEntity($database, $_table);
@@ -61,13 +57,13 @@ class GenModel implements GenInterface {
 	}
 
 	protected function getAllTables() {
-		return $this->connCli->getColumn("show tables");
+		return $this->conn->getColumn("show tables");
 	}
 
 	protected function genEntity($database, $table) {
 		$className  = implode('', array_map('ucwords', explode('_', $table)));
 		$entityName = $className.'Entity';
-		$data       = $this->connCli->getAll("select COLUMN_NAME,COLUMN_TYPE,COLUMN_KEY,COLUMN_DEFAULT,COLUMN_COMMENT,EXTRA,IS_NULLABLE from information_schema.columns where table_schema='{$database}' and table_name='{$table}' ORDER BY ORDINAL_POSITION");
+		$data       = $this->conn->getAll("select COLUMN_NAME,COLUMN_TYPE,COLUMN_KEY,COLUMN_DEFAULT,COLUMN_COMMENT,EXTRA,IS_NULLABLE from information_schema.columns where table_schema='{$database}' and table_name='{$table}' ORDER BY ORDINAL_POSITION");
 		$typeArr    = "";
 		$notes      = "";
 		$priKey     = '';
@@ -126,7 +122,16 @@ class {$entityName} extends Entity {
 
 	
 }";
-		file_put_contents($this->outPath . "/{$entityName}.php", $class);
+		$entityFile = $this->outPath . "/{$entityName}.php";
+		if(file_exists($entityFile)){
+			$fileStr = file_get_contents($entityFile);
+			preg_match('/protected\s*\$type\s*=\s*(.+)\s*;/s',$fileStr,$mh);
+			$typeOld = $mh[1]??'';
+			$class = str_replace($typeOld,$type,$fileStr);
+			file_put_contents($entityFile, $class);
+		}else{
+			file_put_contents($entityFile, $class);
+		}
 
 		if ($this->withModel) {
 			echo "Start generating model for table >> " . $database . '-----' . $table . PHP_EOL;
@@ -154,7 +159,7 @@ use Zero\Exception\DbException;
 use App\Dao\Entity\\{$entityName};
 
 class {$modelName} extends Model {
-	protected \$db = '{$this->conn}';
+	protected \$db = '{$this->db}';
 	
 
 	/**
@@ -225,15 +230,22 @@ class {$modelName} extends Model {
 	
 	/**
 	 * @param $entityName \${$varName}
-	 * @return array
+	 * @return {$entityName}[]
 	 * @throws DbException
 	 */
 	public function findBy($entityName \${$varName}) {
 		\$wheres   = \${$varName}->toArray();
 		\$whereStr = \$this->strWhere(\$wheres);
 		\$SQL      = sprintf("select * from %s where %s ", $entityName::TABLE, \$whereStr);
-		\$data = \$this->conn->getColumn(\$SQL, \$wheres);
-		return \$data;
+		\$data = \$this->conn->getAll(\$SQL, \$wheres);
+		if(!\$data){
+			return [];
+		}
+		\${$varName}s = [];
+		foreach (\$data as \$item) {
+			\${$varName}s[\$item['{$priKey}']] = new $entityName(\$item);
+		}
+		return \${$varName}s;
 	}
 }
 CODE;

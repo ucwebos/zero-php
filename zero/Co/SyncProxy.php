@@ -29,8 +29,7 @@ class SyncProxy extends Contract {
 		if (!$this->class) {
 			throw new \Exception('proxy class is not allowed to be null!', 500);
 		}
-		$this->srv = Container::app()
-			->get('SERVER');
+		$this->srv = Container::app()->get(C_SRV);
 	}
 
 	/**

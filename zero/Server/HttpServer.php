@@ -60,7 +60,7 @@ class HttpServer extends IServer {
 
 	public function onTask(\Swoole\Server $server, $task_id, $src_worker_id, $data) {
 		if (is_array($data) && count($data) == 4) {
-			list($class,$args,$name,$arguments) = $data;
+			list($class, $args, $name, $arguments) = $data;
 			$obj = new $class(...$args);
 			return call_user_func_array([$obj, $name], $arguments);
 		}
@@ -85,9 +85,11 @@ class HttpServer extends IServer {
 	}
 
 	public function run() {
-
-		$config = Config::get('MAIN_SERVER');
-
+		$tag    = Config::get('SERVER_TAG') ?: 'MAIN';
+		$config = Config::get('SERVER.' . $tag);
+		if(!$config){
+			die("not found config [SERVER." . $tag . "]!");
+		}
 		$host  = $config['host'] ?? '';
 		$port  = $config['port'] ?? '';
 		$model = SWOOLE_PROCESS;
@@ -97,7 +99,7 @@ class HttpServer extends IServer {
 
 		$bootstrap = $config['bootstrap'] ?? '';
 		if (!class_exists($bootstrap)) {
-			die("not found class [MAIN_SERVER.bootstrap]!");
+			die("not found class [SERVER." . $tag . ".bootstrap]!");
 		}
 		$this->bootstrap = new $bootstrap;
 		if (!$this->bootstrap instanceof IBootstrap) {
@@ -117,8 +119,7 @@ class HttpServer extends IServer {
 
 		if (isset($config['setting']['task_worker_num']) && $config['setting']['task_worker_num'] > 0) {
 			//同步代理任务定义
-			Container::app()
-				->set('SERVER', $this->server);
+			Container::app()->set(C_SRV, $this->server);
 			$this->server->on("Task", [$this, "onTask"]);
 		}
 		try {

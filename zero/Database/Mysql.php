@@ -54,7 +54,6 @@ class Mysql {
 				\PDO::ATTR_ORACLE_NULLS       => \PDO::NULL_TO_STRING,
 				\PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
 				\PDO::ATTR_STRINGIFY_FETCHES  => FALSE,
-				\PDO::ATTR_PERSISTENT         => TRUE
 			];
 
 		$this->config['dsn'] = "mysql:host={$this->config['host']};dbname={$this->config['database']};port={$this->config['port']}";

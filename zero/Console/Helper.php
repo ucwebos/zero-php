@@ -14,7 +14,7 @@ class Helper implements Cmd {
 	const CMD = [
 		'srv' => [
 			'class' => Server\Command::class,
-			'note'  => '服务管理'
+			'note'  => '服务管理 srv:tag选定tag 默认MAIN'
 		],
 		'gen' => [
 			'class' => Gen\Command::class,
@@ -26,21 +26,25 @@ class Helper implements Cmd {
 		],
 	];
 
-	public function __construct($env = '') {
-		if ($env) {
-			Config::setEnv($env);
-		}
+	public function __construct() {
 		Config::load();
 	}
 
 	public function exec($argv) {
 		$argObj = new Args($argv);
-		if (!$argObj->getCmd()) {
+		$cmd    = $argObj->getCmd();
+		if (!$cmd) {
 			exit($this->help() . PHP_EOL);
 		}
 		$ctl = NULL;
 		try {
-			$conf = self::CMD[$argObj->getCmd()] ?? [];
+			if (strpos($cmd, ':')) {
+				$tmp = explode(':', $cmd);
+				$cmd = $tmp[0];
+				$tag = $tmp[1];
+				Config::setField('SERVER_TAG', $tag);
+			}
+			$conf = self::CMD[$cmd] ?? [];
 			if (!$conf) {
 				throw  new \Exception("error cmd");
 			}

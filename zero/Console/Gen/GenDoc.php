@@ -8,112 +8,79 @@
 
 namespace Zero\Console\Gen;
 
+use Zero\Config;
+use Zero\IBootstrap;
+use Zero\Route\Route;
+
 /**
  * 文档生成器
  * Class GenDoc
  * @package Zero\Console\Gen
  */
 class GenDoc implements GenInterface {
-	//配置的变量
-	protected $protoPath  = '';
-	protected $pluginPath = '';
-	protected $outPath    = '';
-	protected $testAPI    = '';
-	protected $docPath    = '';
-	//运行时变量
-	protected $data             = [];
-	protected $types            = [];
-	protected $messages         = [];
-	protected $methods          = [];
-	protected $requestMessages  = [];
-	protected $responseMessages = [];
-
+	protected $docsPath;
+	protected $testApi;
 
 	public function gen($args) {
+		$this->docsPath = ROOT_PATH . '/docs/';
+		$this->testApi  = $args['api'] ?? 'http://localhost:7770';
 
-		$table    = $args['proto'] ?? '';
-		$database = $args['db'] ?? '';
-		if (!$database || !$table) {
-			die("Please input args like db={database} t={table or ALL} -o={outPath} ");
+		Config::load();
+		$config    = Config::get('FPM_SERVER');
+		$bootstrap = $config['bootstrap'] ?? '';
+		if (!class_exists($bootstrap)) {
+			die("not found class [FPM_SERVER.bootstrap]!");
+		}
+		$boot = new $bootstrap;
+		if (!$boot instanceof IBootstrap) {
+			die("the class [{$bootstrap}] unrealized interface [IBootstrap]");
 		}
 
-		if (!$this->protoPath || !$this->pluginPath||$this->outPath||$this->docPath){
-			die('请设置正确的配置 ! ');
+		$r = $boot->route(new Route());
+
+		$groups = [];
+		foreach ($r->getRoutes() as $method => $routes) {
+			foreach ($routes as $route => $handle) {
+				$route     = trim($route, '/');
+				$groupEnd  = strpos($route, '/');
+				$group     = substr($route, 0, $groupEnd);
+				$groupPath = $this->docsPath . '/' . $group;
+				if (!file_exists($groupPath)) {
+					@mkdir($this->docsPath . '/' . $group);
+				}
+				$tpl      = $this->itemTPL($method, $route);
+				$filename = str_replace('/', '_', trim(substr($route, $groupEnd), '/'));
+				$groups[$group][] = $filename;
+				$file             = $groupPath . '/' . $filename . '.md';
+				if (!file_exists($file)) {
+					file_put_contents($file, $tpl);
+				}
+			}
 		}
-
-		$proto = $args['proto'] ?? '';
-		if (!$proto) {
-			die('请设置正确的proto文件路径 !');
+		$sidebar = "* [说明](header.md)" . PHP_EOL;
+		$cmtMap  = $this->sidebars();
+		foreach ($groups as $group => $files) {
+			$groupUp = strtoupper($group);
+			$sidebar .= "* {$groupUp}" . PHP_EOL;
+			foreach ($files as $file) {
+				$name = $file;
+				if ($cmtMap) {
+					$name = $cmtMap["{$group}/{$file}.md"] ?? $file;
+				}
+				$sidebar .= "	* [{$name}]({$group}/{$file}.md)" . PHP_EOL;
+			}
 		}
-		if (strpos($proto, '/') != 0) {
-			$proto = ROOT_PATH . '/' . $proto;
-		}
-		if (is_dir($proto)) {
-			$proto = $proto . '*.proto';
-		}
-		echo $proto . PHP_EOL;
-
-		$this->parseProto($proto);
-
-		$doc = '';
-		//拼header头
-		$header = ROOT_PATH . '/docs/header.md';
-		if (file_exists($header)) {
-			$doc .= file_get_contents($header);
-		}
-		$date = date('Ymd');
-		$doc  .= <<<DOC
-# API接口文档—V{$date}
-
-> 根据Protobuf定义生成
-
-
-DOC;
-		foreach ($this->methods as $item) {
-			$doc .= $this->itemTPL($item);
-		}
-
-		$doc = $doc . PHP_EOL . "# 附录[对象格式]" . PHP_EOL;
-		$doc .= $this->messagesMD();
-
-		//生成md文件
-		file_put_contents(ROOT_PATH . '/docs/doc.md', $doc);
+		file_put_contents($this->docsPath . '/_sidebar.md', $sidebar);
+		echo "SUCCESS!";
+		exit;
 	}
 
-	protected function itemTPL($item) {
+	protected function itemTPL($method, $route) {
 
-		$description = $item['description'] ?? '';
 
-		preg_match('#\[(.*)\]#', $description, $hm);
-
-		$uriStr = $hm[1] ?? '';
-
-		$method = 'POST';
-		$route  = $uriStr;
-		$url    = $this->testAPI = $uriStr;
-		$module = '';
-		$name   = $item['name'] ?? '';
-
-		$desc = trim(preg_replace('#\[(.*)\]#', '', $description));
-		if ($desc) {
-			$name .= '[' . $desc . ']';
-		}
-
-		$requestType              = $item['requestType'] ?? '';
-		$this->requestMessages[]  = $requestType;
-		$responseType             = $item['responseType'] ?? '';
-		$this->responseMessages[] = $responseType;
-		if (in_array($requestType, $this->types)) {
-			die('requestType must be a message !');
-		}
-
-		$paramsMD = $this->getParamsMD($requestType);
-		$rspMD    = $this->getRspMD($responseType);
-//		$rspJSON  = $this->rspJSON($responseType);
+		$url = trim($this->testApi, '/') . '/' . $route;
 
 		$tpl = <<<DOC
-
-## {$name}
 
 > 路径：{$route}
 
@@ -124,154 +91,136 @@ DOC;
 
 |字段|说明|是否必须|类型|
 |---|---|---|---|
-{$paramsMD}
+|`params`|参数1|`是`|string|
 
 
 * 响应数据： 
 
 |字段|说明|类型|
 |---|---|---|
-{$rspMD}
+|`info`|响应信息|object|
 
-
+* 响应示例
+``` json
+	{json}
+```
 DOC;
-
-		//``` json
-		//{$rspJSON}
-		//```
-		if ($module) {
-			$tpl = "# {$module}" . PHP_EOL . $tpl;
-		}
 		return $tpl;
 	}
 
-	protected function rspJSON($requestType) {
-
-	}
-
-	protected function getParamsMD($requestType) {
-		$message = $this->messages[$requestType];
-		$str     = '';
-		foreach ($message as $item) {
-			$description = $item['description'];
+	protected function getParamsMD($message) {
+		$str = '';
+		if (!$message) {
+			return $str;
+		}
+		foreach ($message as $filed => $item) {
 			$requiredLab = "否";
-			if (strpos($description, '[required]') !== FALSE) {
+			if (isset($item['required']) && $item['required']) {
 				$requiredLab = '是';
 			}
-			$filed     = $item['name'];
-			$desc      = str_replace('[required]', '', $description);
+
+			$desc      = $item['comment'];
 			$filedType = $item['type'];
-			$label     = $item['label'] ?? '';
-			if ($label != '' && $label == "repeated") {
-				//处理map
-				if ($mapType = $this->parseMap($filedType)) {
-					$filedType = $mapType;
-				} else {
-					$filedType = "array[$filedType]";
-				}
+			$str       .= "| `{$filed}` |{$desc}|`{$requiredLab}`|{$filedType}|" . PHP_EOL;
+		}
+		return $str;
+	}
+
+	protected function getRspMD($message) {
+		$str = '';
+		foreach ($message as $filed => $item) {
+			$desc      = $item['comment'];
+			$filedType = $item['type'];
+			$str       .= "| `{$filed}` |{$desc}|{$filedType}|" . PHP_EOL;
+			if (isset($item['item'])) {
+				$str .= $this->getChildMD($filedType, $item['item'], $filed);
 			}
-			$str .= "| `{$filed}` |{$desc}|`{$requiredLab}`|{$filedType}|" . PHP_EOL;
 		}
 
 		return $str;
 	}
 
-	protected function getRspMD($requestType) {
-		$message = $this->messages[$requestType];
-		$str     = '';
-		foreach ($message as $item) {
-			$description = $item['description'];
-			$filed       = $item['name'];
-			$desc        = str_replace('[required]', '', $description);
-			$filedType   = $item['type'];
-			$label       = $item['label'] ?? '';
-			if ($label != '' && $label == "repeated") {
-				//处理map
-				if ($mapType = $this->parseMap($filedType)) {
-					$filedType = $mapType;
-				} else {
-					$filedType = "array[$filedType]";
-				}
+	protected function getChildMD($pType, $item, $parentFiled) {
+		$str = '';
+		foreach ($item as $k => $v) {
+			$desc  = $v['comment'];
+			$fType = $v['type'];
+			$filed = "{$parentFiled}.{$k}";
+			if ($pType == 'array') {
+				$filed = "{$parentFiled}.[i].{$k}";
 			}
-			$str .= "| `{$filed}` |{$desc}|{$filedType}|" . PHP_EOL;
+			$str .= "| `$filed` |{$desc}|{$fType}|" . PHP_EOL;
+			if (isset($v['item'])) {
+				$str .= $this->getChildMD($fType, $v['item'], $filed);
+			}
 		}
-
 		return $str;
 	}
 
-	protected function messagesMD() {
-
-		$md = '';
-		foreach ($this->messages as $k => $message) {
-			if (in_array($k, $this->requestMessages) || in_array($k, $this->responseMessages)) {
-				continue;
+	protected function sidebars() {
+		$map       = [];
+		$doc       = file_get_contents($this->docsPath . '/_sidebar.md');
+		$parsedown = new \Parsedown();
+		$r         = $parsedown->parse($doc);
+		$xml       = simplexml_load_string($r, 'SimpleXMLElement', LIBXML_NOCDATA);
+		$lis       = $xml->xpath('/ul/li/ul/li');
+		foreach ($lis as $li) {
+			$html = $li->asXML();
+			$dom  = new \DOMDocument;
+			$dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+			$nodes = $dom->getElementsByTagName('li');
+			/**
+			 * @var $node \DOMNode
+			 */
+			foreach ($nodes as $node) {
+				$href = $node->firstChild->attributes->getNamedItem('href')->textContent;
+				$node->nodeValue;
+				$map[$href] = $node->nodeValue;
 			}
-			if ($this->parseMap($k)) {
-				continue;
+		}
+
+		return $map;
+	}
+
+	protected function comments($path) {
+		$doc       = file_get_contents($path);
+		$parsedown = new \Parsedown();
+		$r         = '<body>' . $parsedown->parse($doc) . '</body>';
+		$xml       = simplexml_load_string($r, 'SimpleXMLElement', LIBXML_NOCDATA);
+		$arr       = json_decode(json_encode($xml), TRUE);
+		$req       = $arr['table'][0]['tbody']['tr'];
+		$rsp       = $arr['table'][1]['tbody']['tr'];
+
+		$reqCmts = [];
+		foreach ($req as $item) {
+
+			$item  = $item['td'];
+			$field = $item[0]['code'] ?? '';
+			$cmt   = $item[1] ?? '';
+			$must  = $item[2]['code'] ?? '';
+			$type  = $item[3] ?? '';
+			if ($field) {
+				$reqCmts[$field] = [
+					'cmt'  => $cmt,
+					'must' => $must,
+					'type' => $type,
+				];
 			}
-			$rspMD = $this->getRspMD($k);
-			$md    .= <<<DOC
-## {$k} 
-
-|字段|说明|类型|
-|---|---|---|
-{$rspMD}
-
-DOC;
 		}
-		return $md;
-	}
-
-	protected function parseMap($filedType) {
-		if (in_array($filedType, $this->types)) {
-			return '';
-		}
-		if (!strpos($filedType, 'Entry')) {
-			return '';
-		}
-		$fields = $this->messages[$filedType];
-		if (count($fields) != 2) {
-			return '';
-		}
-		if ($fields[0]['name'] == 'key') {
-			$tK = $fields[0]['type'] ?? '';
-			$tV = $fields[1]['type'] ?? '';
-			return " map<{$tK}, $tV>";
-		}
-	}
-
-	protected function parseNote() {
-
-	}
-
-	protected function parseProto($proto) {
-
-		$cmd = "protoc \
-  -I=$this->protoPath \
-  --plugin=protoc-gen-doc=$this->pluginPath \
-  --doc_out=$this->outPath \
-  --doc_opt=json,data.json \
-  $proto";
-		exec($cmd);
-
-		//解析json
-		$jsonFile   = $this->outPath . 'data.json';
-		$jsonStr    = file_get_contents($jsonFile);
-		$this->data = json_decode($jsonStr, TRUE);
-
-		$scalarValueTypes = $this->data['scalarValueTypes'] ?? [];
-		$this->types      = array_column($scalarValueTypes, 'protoType');
-
-		$messages = $this->data['files'][0]['messages'] ?? [];
-
-		foreach ($messages as $message) {
-			// todo map
-			$this->messages[$message['name']] = $message['fields'];
+		$rspCmts = [];
+		foreach ($rsp as $item) {
+			$item  = $item['td'];
+			$field = $item[0]['code'] ?? '';
+			$cmt   = $item[1] ?? '';
+			$type  = $item[2] ?? '';
+			if ($field) {
+				$rspCmts[$field] = [
+					'cmt'  => $cmt,
+					'type' => $type,
+				];
+			}
 		}
 
-		$methods = $this->data['files'][0]['services'][0]['methods'] ?? [];
-		foreach ($methods as $method) {
-			$this->methods[$method['name']] = $method;
-		}
+		return [$reqCmts, $rspCmts];
 	}
 }
