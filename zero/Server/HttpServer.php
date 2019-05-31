@@ -9,7 +9,6 @@
 namespace Zero\Server;
 
 use Zero\Business\Http\Response;
-use Zero\Co\SyncProxy;
 use Zero\Config;
 use Zero\Container;
 use Zero\Route\Route;
@@ -28,7 +27,7 @@ class HttpServer extends IServer {
 
 	public function init(\Swoole\Server $server) {
 		$this->bootstrap->init();
-		$r = $this->bootstrap->route(new Route());
+		$r = $this->bootstrap->route(new Route($this->bootstrap->namespace));
 
 		$this->dispatcher = new Dispatcher($r->getRoutes());
 	}

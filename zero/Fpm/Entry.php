@@ -35,7 +35,7 @@ class Entry {
 		}
 		try {
 			$this->bootstrap->init();
-			$r = $this->bootstrap->route(new Route());
+			$r = $this->bootstrap->route(new Route($this->bootstrap->namespace));
 		} catch (\Throwable $e) {
 			die($e->getMessage());
 		}

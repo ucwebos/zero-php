@@ -11,12 +11,11 @@ namespace App;
 use Zero\Co\Pool\MysqlPool;
 use Zero\Co\Pool\PoolManager;
 use Zero\Co\Pool\RedisPool;
-use Zero\Container;
 use Zero\IBootstrap;
 use Zero\Route\Route;
 use Swoole\Runtime;
 
-class Bootstrap implements IBootstrap {
+class Bootstrap extends IBootstrap {
 	/**
 	 * 配置路由
 	 * @param Route $r
@@ -67,7 +66,7 @@ class Bootstrap implements IBootstrap {
 		}
 		// 可选
 		// 注册默认LoggerWriter ...
-		//	Container::app()->set('LoggerWriter',new ElkWriter());
+		// register(C_LOG_WRITER,new ElkWriter());
 		// 注册类到app容器 ...
 
 	}

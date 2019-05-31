@@ -14,6 +14,12 @@ class Route {
 	 */
 	protected $routes = [];
 
+	public function __construct($baseNamespace = '') {
+		if ($baseNamespace) {
+			$this->namespace = $baseNamespace;
+		}
+	}
+
 	/**
 	 * @param          $namespace
 	 * @param callable $callable
