@@ -29,18 +29,8 @@ class SyncProxy extends Contract {
 		if (!$this->class) {
 			throw new \Exception('proxy class is not allowed to be null!', 500);
 		}
-		$this->srv = Container::app()->get(C_SRV);
-	}
-
-	/**
-	 * @param       $class
-	 * @param array $args
-	 * @return object
-	 */
-	public function coProxy($class, $args = []) {
-		$this->class = $class;
-		$this->args  = $args;
-		return $this;
+		$this->srv = Container::app()
+			->get(C_SRV);
 	}
 
 	/**
