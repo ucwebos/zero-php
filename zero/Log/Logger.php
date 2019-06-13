@@ -31,7 +31,7 @@ class Logger implements LoggerInterface {
 
 	public function __construct() {
 		if ($writer = Container::app()
-			->get('LoggerWriter')) {
+			->get(C_LOG_WRITER)) {
 			$this->writer = $writer;
 		} else {
 			$this->writer = new File();

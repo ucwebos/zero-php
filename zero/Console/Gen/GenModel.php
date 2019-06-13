@@ -62,7 +62,7 @@ class GenModel implements GenInterface {
 
 	protected function genEntity($database, $table) {
 		$className  = implode('', array_map('ucwords', explode('_', $table)));
-		$entityName = $className.'Entity';
+		$entityName = $className . 'Entity';
 		$data       = $this->conn->getAll("select COLUMN_NAME,COLUMN_TYPE,COLUMN_KEY,COLUMN_DEFAULT,COLUMN_COMMENT,EXTRA,IS_NULLABLE from information_schema.columns where table_schema='{$database}' and table_name='{$table}' ORDER BY ORDINAL_POSITION");
 		$typeArr    = "";
 		$notes      = "";
@@ -98,13 +98,12 @@ class GenModel implements GenInterface {
 			// 字段属性
 			$typeArr .= "
 		'{$column}' => self::$typeUp,";
-
 		}
 
-		$type     = "[{$typeArr}
+		$type = "[{$typeArr}
 	]";
 
-		$class = "<?php
+		$class      = "<?php
 
 namespace App\Dao\Entity;
 
@@ -123,13 +122,19 @@ class {$entityName} extends Entity {
 	
 }";
 		$entityFile = $this->outPath . "/{$entityName}.php";
-		if(file_exists($entityFile)){
+		if (file_exists($entityFile)) {
 			$fileStr = file_get_contents($entityFile);
-			preg_match('/protected\s*\$type\s*=\s*(.+)\s*;/s',$fileStr,$mh);
-			$typeOld = $mh[1]??'';
-			$class = str_replace($typeOld,$type,$fileStr);
+			preg_match('/protected\s*\$type\s*=\s*(.+)\s*;/s', $fileStr, $mh);
+			$typeOld = $mh[1] ?? '';
+			preg_match("/\*\s*Class\s*{$entityName}\s*(.+)\*\//s", $fileStr, $mh2);
+			$nodeOld = $mh2[1] ?? '';
+			//替换字段
+			$class = str_replace($typeOld, $type, $fileStr);
+			//替换注释
+			$class = str_replace($nodeOld, $notes, $class);
+
 			file_put_contents($entityFile, $class);
-		}else{
+		} else {
 			file_put_contents($entityFile, $class);
 		}
 
@@ -141,13 +146,13 @@ class {$entityName} extends Entity {
 
 	protected function genModel($className, $priKey) {
 		//未设置主健不能生成
-		if(!$priKey){
+		if (!$priKey) {
 			return;
 		}
 
-		$varName     = lcfirst($className);
+		$varName    = lcfirst($className);
 		$entityName = $className . 'Entity';
-		$modelName = $className.'Model';
+		$modelName  = $className . 'Model';
 
 		$model = <<<CODE
 <?php
@@ -226,6 +231,34 @@ class {$modelName} extends Model {
 	public function update(\${$priKey}, $entityName \${$varName}) {
 		\$result = \$this->conn->update({$entityName}::TABLE, \${$varName}->toArray(), ['{$priKey}' => \${$priKey}]);
 		return \$result;
+	}
+	
+	/**
+	 * @param $entityName \${$varName}
+	 * @return {$entityName}|NULL
+	 * @throws DbException
+	 */
+	public function save($entityName \${$varName}) {
+		\${$priKey} = \${$varName}->$priKey;
+		if (!\${$priKey}) {
+			\$result = \$this->conn->insert($entityName::TABLE, \${$varName}->toArray());
+			if (\$result) {
+				\${$priKey} = \$this->conn->lastInsertId();
+			}
+		} else {
+			\$_info = \$this->find(\${$priKey});
+			if (\$_info) {
+				\$result = \$this->conn->update($entityName::TABLE, \${$varName}->toArray(), ['$priKey' => \${$priKey}]);
+			} else {
+				\$result = \$this->conn->insert($entityName::TABLE, \${$varName}->toArray());
+			}
+		}
+		if (!\$result) {
+			return NULL;
+		}
+
+		\${$varName} = \$this->find(\${$priKey});
+		return \${$varName};
 	}
 	
 	/**

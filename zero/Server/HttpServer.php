@@ -26,9 +26,9 @@ class HttpServer extends IServer {
 	protected $dispatcher;
 
 	public function init(\Swoole\Server $server) {
+		echo "bootstrap init ....".PHP_EOL;
 		$this->bootstrap->init();
 		$r = $this->bootstrap->route(new Route($this->bootstrap->namespace));
-
 		$this->dispatcher = new Dispatcher($r->getRoutes());
 	}
 
@@ -126,6 +126,7 @@ class HttpServer extends IServer {
 		} catch (\Throwable $e) {
 			die("init error: " . $e->getMessage());
 		}
+		echo "server start!".PHP_EOL;
 		$this->server->start();
 	}
 }

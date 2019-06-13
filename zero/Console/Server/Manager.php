@@ -47,6 +47,7 @@ class Manager {
 
 	public function restart() {
 		$this->stop();
+		usleep(10000);
 		$this->daemon();
 	}
 
