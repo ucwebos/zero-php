@@ -3,9 +3,8 @@
 namespace Zero\Co;
 
 use Zero\Container;
-use Zero\Contract;
 
-class SyncProxy extends Contract {
+class SyncProxy {
 	/**
 	 * @var \Swoole\Server $srv
 	 */
@@ -29,8 +28,18 @@ class SyncProxy extends Contract {
 		if (!$this->class) {
 			throw new \Exception('proxy class is not allowed to be null!', 500);
 		}
-		$this->srv = Container::app()
-			->get(C_SRV);
+		$this->srv = app()->get(C_SRV);
+	}
+
+	/**
+	 * @param       $class
+	 * @param array $args
+	 * @return object
+	 */
+	public function coProxy($class, $args = []) {
+		$this->class = $class;
+		$this->args  = $args;
+		return $this;
 	}
 
 	/**
@@ -43,7 +52,7 @@ class SyncProxy extends Contract {
 	}
 
 	public function __call($name, $arguments) {
-		if (!$this->isCo() || !$this->srv) {
+		if (!isCo() || !$this->srv) {
 			$obj = new $this->class(...$this->args);
 			return call_user_func_array([$obj, $name], $arguments);
 		}

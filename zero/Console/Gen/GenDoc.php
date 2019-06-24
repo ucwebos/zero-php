@@ -11,6 +11,7 @@ namespace Zero\Console\Gen;
 use Zero\Config;
 use Zero\IBootstrap;
 use Zero\Route\Route;
+use Zero\Support\Parsedown;
 
 /**
  * 文档生成器
@@ -26,10 +27,11 @@ class GenDoc implements GenInterface {
 		$this->testApi  = $args['api'] ?? 'http://localhost:7770';
 
 		Config::load();
-		$config    = Config::get('FPM_SERVER');
+		$tag       = $args['srv'] ?? 'MAIN';
+		$config    = Config::get('SERVER.' . $tag);
 		$bootstrap = $config['bootstrap'] ?? '';
 		if (!class_exists($bootstrap)) {
-			die("not found class [FPM_SERVER.bootstrap]!");
+			die("not found class [SERVER.$tag.bootstrap]!");
 		}
 		$boot = new $bootstrap;
 		if (!$boot instanceof IBootstrap) {
@@ -48,8 +50,8 @@ class GenDoc implements GenInterface {
 				if (!file_exists($groupPath)) {
 					@mkdir($this->docsPath . '/' . $group);
 				}
-				$tpl      = $this->itemTPL($method, $route);
-				$filename = str_replace('/', '_', trim(substr($route, $groupEnd), '/'));
+				$tpl              = $this->itemTPL($method, $route);
+				$filename         = str_replace('/', '_', trim(substr($route, $groupEnd), '/'));
 				$groups[$group][] = $filename;
 				$file             = $groupPath . '/' . $filename . '.md';
 				if (!file_exists($file)) {
@@ -160,7 +162,7 @@ DOC;
 	protected function sidebars() {
 		$map       = [];
 		$doc       = file_get_contents($this->docsPath . '/_sidebar.md');
-		$parsedown = new \Parsedown();
+		$parsedown = new Parsedown();
 		$r         = $parsedown->parse($doc);
 		$xml       = simplexml_load_string($r, 'SimpleXMLElement', LIBXML_NOCDATA);
 		$lis       = $xml->xpath('/ul/li/ul/li');
@@ -180,47 +182,5 @@ DOC;
 		}
 
 		return $map;
-	}
-
-	protected function comments($path) {
-		$doc       = file_get_contents($path);
-		$parsedown = new \Parsedown();
-		$r         = '<body>' . $parsedown->parse($doc) . '</body>';
-		$xml       = simplexml_load_string($r, 'SimpleXMLElement', LIBXML_NOCDATA);
-		$arr       = json_decode(json_encode($xml), TRUE);
-		$req       = $arr['table'][0]['tbody']['tr'];
-		$rsp       = $arr['table'][1]['tbody']['tr'];
-
-		$reqCmts = [];
-		foreach ($req as $item) {
-
-			$item  = $item['td'];
-			$field = $item[0]['code'] ?? '';
-			$cmt   = $item[1] ?? '';
-			$must  = $item[2]['code'] ?? '';
-			$type  = $item[3] ?? '';
-			if ($field) {
-				$reqCmts[$field] = [
-					'cmt'  => $cmt,
-					'must' => $must,
-					'type' => $type,
-				];
-			}
-		}
-		$rspCmts = [];
-		foreach ($rsp as $item) {
-			$item  = $item['td'];
-			$field = $item[0]['code'] ?? '';
-			$cmt   = $item[1] ?? '';
-			$type  = $item[2] ?? '';
-			if ($field) {
-				$rspCmts[$field] = [
-					'cmt'  => $cmt,
-					'type' => $type,
-				];
-			}
-		}
-
-		return [$reqCmts, $rspCmts];
 	}
 }

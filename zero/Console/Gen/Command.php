@@ -18,14 +18,15 @@ use Zero\Console\Helper;
  */
 class Command implements Cmd {
 	const CMD = [
-		'doc'   => [
+		'doc'    => [
 			'args'  => [
+				'[srv]' => '服务默认MAIN',
 				'[api]' => '测试api地址',
 			],
 			'note'  => '生成文档',
 			'class' => GenDoc::class,
 		],
-		'table' => [
+		'table'  => [
 			'args'  => [
 				'db=[database]' => '数据库',
 				't=[model]'     => '模型 为ALL时生成所有',
@@ -33,7 +34,15 @@ class Command implements Cmd {
 			'note'  => '数据库表生成 WIP...',
 			'class' => GenTable::class,
 		],
-		'model' => [
+		'entity' => [
+			'args'  => [
+				'db=[database]' => '数据库',
+				't=[model]'     => '表名 为ALL时生成所有',
+			],
+			'note'  => '数据表实体类生成',
+			'class' => GenEntity::class,
+		],
+		'model'  => [
 			'args'  => [
 				'db=[database]' => '数据库',
 				't=[model]'     => '表名 为ALL时生成所有',

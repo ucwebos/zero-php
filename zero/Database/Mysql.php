@@ -27,7 +27,7 @@ class Mysql {
 
 	/**
 	 * @param $name
-	 * @return mixed
+	 * @return Mysql
 	 * @throws \Exception
 	 */
 	public static function getInstance($name) {
@@ -54,6 +54,7 @@ class Mysql {
 				\PDO::ATTR_ORACLE_NULLS       => \PDO::NULL_TO_STRING,
 				\PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
 				\PDO::ATTR_STRINGIFY_FETCHES  => FALSE,
+				//				\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => FALSE
 			];
 
 		$this->config['dsn'] = "mysql:host={$this->config['host']};dbname={$this->config['database']};port={$this->config['port']}";

@@ -10,7 +10,6 @@ namespace Zero\Server;
 
 use Zero\Business\Http\Response;
 use Zero\Config;
-use Zero\Container;
 use Zero\Route\Route;
 use Zero\Route\Dispatcher;
 use Zero\IBootstrap;
@@ -26,9 +25,9 @@ class HttpServer extends IServer {
 	protected $dispatcher;
 
 	public function init(\Swoole\Server $server) {
-		echo "bootstrap init ....".PHP_EOL;
+		echo "bootstrap init ...." . PHP_EOL;
 		$this->bootstrap->init();
-		$r = $this->bootstrap->route(new Route($this->bootstrap->namespace));
+		$r                = $this->bootstrap->route(new Route($this->bootstrap->namespace));
 		$this->dispatcher = new Dispatcher($r->getRoutes());
 	}
 
@@ -71,8 +70,9 @@ class HttpServer extends IServer {
 	public function onWorkerStart(\Swoole\Server $server, $workerId) {
 		if ($server->taskworker) {
 			define('TASK_WORKER', TRUE);
+		} else {
+			$this->bootstrap->start();
 		}
-		$this->bootstrap->start();
 	}
 
 	public function onWorkerStop(\Swoole\Server $server, $workerId) {
@@ -86,7 +86,7 @@ class HttpServer extends IServer {
 	public function run() {
 		$tag    = Config::get('SERVER_TAG') ?: 'MAIN';
 		$config = Config::get('SERVER.' . $tag);
-		if(!$config){
+		if (!$config) {
 			die("not found config [SERVER." . $tag . "]!");
 		}
 		$host  = $config['host'] ?? '';
@@ -118,7 +118,7 @@ class HttpServer extends IServer {
 
 		if (isset($config['setting']['task_worker_num']) && $config['setting']['task_worker_num'] > 0) {
 			//同步代理任务定义
-			Container::app()->set(C_SRV, $this->server);
+			app()->set("_SRV", $this->server);
 			$this->server->on("Task", [$this, "onTask"]);
 		}
 		try {
@@ -126,7 +126,7 @@ class HttpServer extends IServer {
 		} catch (\Throwable $e) {
 			die("init error: " . $e->getMessage());
 		}
-		echo "server start!".PHP_EOL;
+		echo "server start!" . PHP_EOL;
 		$this->server->start();
 	}
 }

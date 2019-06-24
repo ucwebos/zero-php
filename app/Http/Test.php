@@ -8,7 +8,8 @@
 
 namespace App\Http;
 
-use App\Utils\Async;
+use Zero\Co\SyncCo;
+
 
 class Test extends BaseController {
 	protected $service;
@@ -24,7 +25,8 @@ class Test extends BaseController {
 
 	public function t3() {
 
-		Async::syncCall()->setTimeout(3)->test();
+		SyncCo::proxy()->setTimeout(3)->test();
+		SyncCo::proxy()->setTimeout(100)->test();
 
 		return ["r" => 't3'];
 	}

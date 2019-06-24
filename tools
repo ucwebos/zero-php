@@ -15,6 +15,6 @@ define('CONF_DIR', __DIR__);
 //配置文件类型
 define('CONF_TYPE', 'YAML'); // 'YAML' 'PHP'
 //配置文件名
-define('ENV', 'env');
+define('ENV', 'dev');
 
 (new \Zero\Console\Helper())->exec($argv);

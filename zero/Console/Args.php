@@ -16,7 +16,7 @@ class Args {
 
 	public function __construct($argv) {
 		foreach ($argv as $item) {
-			if (in_array($item, ["tools.php", "tools"])) {
+			if (strpos($item, "tools") !== FALSE) {
 				continue;
 			}
 			if ($item == "--help") {

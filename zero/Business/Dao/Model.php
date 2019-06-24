@@ -36,7 +36,7 @@ class Model extends Contract {
 	}
 
 	public function __construct() {
-		if ($this->isCo()) {
+		if (isCo()) {
 			$this->pool = PoolManager::pool(MysqlPool::class, $this->db);
 			if ($this->pool == NULL) {
 				throw new PoolException("mysql pool is null", PoolException::ERROR_POOL);
@@ -51,7 +51,7 @@ class Model extends Contract {
 	}
 
 	public function __destruct() {
-		if ($this->isCo()) {
+		if (isCo()) {
 			$this->pool->recycle($this->conn);
 		}
 	}

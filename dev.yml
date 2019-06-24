@@ -28,3 +28,12 @@ REDIS:
     port: 6379
     auth: ~
 
+GENERATE:
+  doc:
+    xxx: ~
+  entity:
+    db: core
+  model:
+    db: core
+  table:
+    db: core

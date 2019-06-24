@@ -30,8 +30,7 @@ class Logger implements LoggerInterface {
 	protected $writer;
 
 	public function __construct() {
-		if ($writer = Container::app()
-			->get(C_LOG_WRITER)) {
+		if ($writer = app()->get(C_LOG_WRITER)) {
 			$this->writer = $writer;
 		} else {
 			$this->writer = new File();

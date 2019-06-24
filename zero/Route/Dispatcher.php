@@ -2,7 +2,6 @@
 
 namespace Zero\Route;
 
-use Zero\Contract;
 use Zero\Business\Http\Request;
 use Zero\Business\Http\Response;
 use Zero\Business\Controller;
@@ -10,7 +9,7 @@ use Zero\Middleware\AfterMiddleware;
 use Zero\Middleware\BeforeMiddleware;
 use Zero\Middleware\MiddlewareRejected;
 
-class Dispatcher extends Contract {
+class Dispatcher  {
 	const NOT_FOUND          = 0;
 	const FOUND              = 1;
 	const METHOD_NOT_ALLOWED = 2;
@@ -120,8 +119,7 @@ class Dispatcher extends Contract {
 					}
 					return $response;
 				} catch (\Throwable $e) {
-					$this->logger()
-						->error($e->getMessage(), $e->getTrace());
+					logger()->error($e->getMessage(), $e->getTrace());
 					return $this->errorHandler->serverError();
 				}
 				break;

@@ -32,7 +32,7 @@ class Cache extends Contract {
 	 * Model constructor.
 	 */
 	public function __construct() {
-		if ($this->isCo()) {
+		if (isCo()) {
 			$this->pool = PoolManager::pool(RedisPool::class, $this->redis);
 			if ($this->pool == NULL) {
 				throw new PoolException("redis pool is null", PoolException::ERROR_POOL);
@@ -47,7 +47,7 @@ class Cache extends Contract {
 	}
 
 	public function __destruct() {
-		if ($this->isCo()) {
+		if (isCo()) {
 			$this->pool->recycle($this->conn);
 		}
 	}

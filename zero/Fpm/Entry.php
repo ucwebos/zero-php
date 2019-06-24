@@ -24,10 +24,10 @@ class Entry {
 	 */
 	public function __construct($tag = 'MAIN') {
 		Config::load();
-		$config    = Config::get('FPM.' . $tag);
+		$config    = Config::get('SERVER.' . $tag);
 		$bootstrap = $config['bootstrap'] ?? '';
 		if (!class_exists($bootstrap)) {
-			die("not found class [FPM_SERVER.bootstrap]!");
+			die("not found class [SERVER.$tag.bootstrap]!");
 		}
 		$this->bootstrap = new $bootstrap;
 		if (!$this->bootstrap instanceof IBootstrap) {
