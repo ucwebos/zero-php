@@ -124,9 +124,9 @@ class {$entityName} extends Entity {
 		$entityFile = $this->outPath . "/{$entityName}.php";
 		if (file_exists($entityFile)) {
 			$fileStr = file_get_contents($entityFile);
-			preg_match('/protected\s*\$type\s*=\s*(.+)\s*;/s', $fileStr, $mh);
+			preg_match('/protected\s*\$type\s*=\s*([^;]+)\s*;/s', $fileStr, $mh);
 			$typeOld = $mh[1] ?? '';
-			preg_match("/\*\s*Class\s*{$entityName}\s*(.+)\*\//s", $fileStr, $mh2);
+			preg_match("/\*\s*Class\s*{$entityName}\s*([^\/]+)\*\//s", $fileStr, $mh2);
 			$nodeOld = $mh2[1] ?? '';
 			//替换字段
 			$class = str_replace($typeOld, $type, $fileStr);
