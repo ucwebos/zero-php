@@ -158,7 +158,7 @@ class Arr
     {
         if (is_null($callback)) {
             if (empty($array)) {
-                return value($default);
+                return static::value($default);
             }
 
             foreach ($array as $item) {
@@ -172,7 +172,7 @@ class Arr
             }
         }
 
-        return value($default);
+        return static::value($default);
     }
 
     /**
@@ -186,7 +186,7 @@ class Arr
     public static function last($array, callable $callback = null, $default = null)
     {
         if (is_null($callback)) {
-            return empty($array) ? value($default) : end($array);
+            return empty($array) ? static::value($default) : end($array);
         }
 
         return static::first(array_reverse($array, true), $callback, $default);
@@ -275,7 +275,7 @@ class Arr
     public static function get($array, $key, $default = null)
     {
         if (! static::accessible($array)) {
-            return value($default);
+            return static::value($default);
         }
 
         if (is_null($key)) {
@@ -287,18 +287,24 @@ class Arr
         }
 
         if (strpos($key, '.') === false) {
-            return $array[$key] ?? value($default);
+            return $array[$key] ?? static::value($default);
         }
 
         foreach (explode('.', $key) as $segment) {
             if (static::accessible($array) && static::exists($array, $segment)) {
                 $array = $array[$segment];
             } else {
-                return value($default);
+                return static::value($default);
             }
         }
 
         return $array;
+    }
+
+
+    public static function value($value)
+    {
+        return $value instanceof \Closure ? $value() : $value;
     }
 
     /**
@@ -362,41 +368,6 @@ class Arr
         return array_intersect_key($array, array_flip((array) $keys));
     }
 
-    /**
-     * Pluck an array of values from an array.
-     *
-     * @param  array  $array
-     * @param  string|array  $value
-     * @param  string|array|null  $key
-     * @return array
-     */
-    public static function pluck($array, $value, $key = null)
-    {
-        $results = [];
-
-        [$value, $key] = static::explodePluckParameters($value, $key);
-
-        foreach ($array as $item) {
-            $itemValue = data_get($item, $value);
-
-            // If the key is "null", we will just append the value to the array and keep
-            // looping. Otherwise we will key the array using the value of the key we
-            // received from the developer. Then we'll return the final array form.
-            if (is_null($key)) {
-                $results[] = $itemValue;
-            } else {
-                $itemKey = data_get($item, $key);
-
-                if (is_object($itemKey) && method_exists($itemKey, '__toString')) {
-                    $itemKey = (string) $itemKey;
-                }
-
-                $results[$itemKey] = $itemValue;
-            }
-        }
-
-        return $results;
-    }
 
     /**
      * Explode the "value" and "key" arguments passed to "pluck".
