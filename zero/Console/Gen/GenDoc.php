@@ -61,6 +61,7 @@ class GenDoc implements GenInterface {
 		}
 		$sidebar = "* [说明](header.md)" . PHP_EOL;
 		$cmtMap  = $this->sidebars();
+		asort($groups);
 		foreach ($groups as $group => $files) {
 			$groupUp = strtoupper($group);
 			$sidebar .= "* {$groupUp}" . PHP_EOL;
