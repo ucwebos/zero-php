@@ -25,7 +25,8 @@ class Request extends \Zero\Business\Http\Request {
 		$headers = [];
 		foreach ($_SERVER as $key => $value) {
 			if ('HTTP_' == substr($key, 0, 5)) {
-				$headers[str_replace('_', '-', substr($key, 5))] = $value;
+				$hKey           = strtolower(str_replace('_', '-', substr($key, 5)));
+				$headers[$hKey] = $value;
 			}
 		}
 		if (isset($_SERVER['PHP_AUTH_DIGEST'])) {
